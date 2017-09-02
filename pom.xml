@@ -5,10 +5,22 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ru.tulin.task</groupId>
-    <artifactId>ru.tulin.task</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <artifactId>filehandler</artifactId>
+    <packaging>jar</packaging>
+    <version>1.0</version>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>ru.tulin.task.FileHandler</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
