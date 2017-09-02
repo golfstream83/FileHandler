@@ -9,7 +9,7 @@ public class FileHandler {
 
     public static void main(String[] args) {
 
-        System.out.println("Введите полный путь к файлу (пример для Windows C:/yourfile.txt)");
+        System.out.println("Enter the full path to the file (example for Windows C:/yourfile.txt)");
 
         try (BufferedReader brConsole = new BufferedReader(new InputStreamReader(System.in));
              BufferedReader brFile = new BufferedReader(new InputStreamReader(new FileInputStream(new File(brConsole.readLine()))))) {
