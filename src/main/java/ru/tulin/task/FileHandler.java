@@ -7,12 +7,12 @@ public class FileHandler {
 
     public static void main(String[] args) {
         FileHandler fileHandler = new FileHandler();
-        List<String> bufferList = fileHandler.readFile(fileHandler.getFilePath());
-        List<ArrayList<String>> resultList = fileHandler.getListCyclicDependencies(bufferList);
-        fileHandler.printResult(resultList);
+        Set<String> bufferSet = fileHandler.readFile(fileHandler.getFilePath());
+        Set<String> resultSet = fileHandler.getAllCyclicDependenciesIds(bufferSet);
+        fileHandler.printResult(resultSet);
     }
 
-    public String getFilePath () {
+    public File getFilePath () {
         String filePath = null;
 
         System.out.println("Enter the full path to the file (example for Windows C:/yourfile.txt)");
@@ -22,77 +22,99 @@ public class FileHandler {
             e.printStackTrace();
         }
 
-        return filePath;
+        return new File(filePath);
     }
 
-    public List<String> readFile(String filePath) {
-        List<String> list = new ArrayList<>();
+    public Set<String> readFile(File filePath) {
+        Set<String> set = new HashSet<>();
         String lineFile;
 
         if (filePath != null) {
-            try (BufferedReader brFile = new BufferedReader(new InputStreamReader(new FileInputStream(new File(filePath))))) {
+            try (BufferedReader brFile = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)))) {
                 while ((lineFile = brFile.readLine()) != null) {
-                    list.add(lineFile);
+                    set.add(lineFile);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
-        return list;
+        return set;
     }
 
-    public List<ArrayList<String>> getListCyclicDependencies(List<String> bufferList) {
-        List<ArrayList<String>> resultList = new ArrayList<>();
-        Set<String> set = new HashSet<>();
+    public Set<String> getAllCyclicDependenciesIds(Set<String> bufferSet) {
+        Set<String> resultSet = new HashSet<>();
+        Set<String> usedPair = new HashSet<>();
 
-        for (String pair : bufferList) {
-            String pairReverse = new StringBuilder(pair).reverse().toString();
+        for (String pair : bufferSet) {
+            String[] array = pair.split(" ");
+            String reversePair = String.format("%s %s", array[1], array[0]);
 
-            if (bufferList.contains(pairReverse) && !set.contains(pair)) {
-                ArrayList<String> listPairs = new ArrayList<>();
-                String leftValuePair = pair.split(" ")[0];
-                String rightValuePair = pair.split(" ")[1];
-                int countPair = 0;
-                int countPairReverse = 0;
-                int countCycles;
+            if (!usedPair.contains(pair) || !usedPair.contains(reversePair)) {
+                Set<String> usedId = new HashSet<>();
+                List<String> listDependenciesId;
+                StringBuilder sequence = new StringBuilder();
+                String firstId = array[0];
+                String secondId = array[1];
 
-                listPairs.add(leftValuePair);
+                sequence.append(pair);
+                usedId.add(firstId);
+                listDependenciesId = getPairsDependentId(secondId, bufferSet, usedId);
 
-                for (String string : bufferList) {
-                    if (string.equals(pair)) {
-                        countPair++;
-                    } else if (string.equals(pairReverse)){
-                        countPairReverse++;
+                if (!listDependenciesId.isEmpty()) {
+                    String secondIdLastPair = listDependenciesId.get(listDependenciesId.size() - 1).split(" ")[1];
+
+                    if (secondIdLastPair.equals(firstId)) {
+                        for (String pairIds : listDependenciesId) {
+                            String[] arrayId = pairIds.split(" ");
+                            String secondIdPair = arrayId[1];
+                            String reversePairIds = String.format("%s %s", arrayId[1], arrayId[0]);
+
+                            usedPair.add(pairIds);
+                            usedPair.add(reversePairIds);
+                            sequence.append(" ").append(secondIdPair);
+                        }
+                        resultSet.add(sequence.toString());
                     }
                 }
+            }
+        }
 
-                countCycles = countPair < countPairReverse ? countPair : countPairReverse;
+        return resultSet;
+    }
 
-                for (int i = 0; i < countCycles; i++) {
-                    listPairs.add(rightValuePair);
-                    listPairs.add(leftValuePair);
+    public List<String> getPairsDependentId(String mainId, Set<String> bufferSet, Set<String> usedId) {
+        List<String> resultList = new ArrayList<>();
+
+        for (String pair : bufferSet) {
+            String[] array = pair.split(" ");
+            String firstId = array[0];
+            String secondId = array[1];
+
+            if (firstId.equals(mainId) && !usedId.contains(firstId)) {
+                resultList.add(pair);
+
+                if (!usedId.contains(secondId)) {
+                    usedId.add(mainId);
+                    resultList.addAll(getPairsDependentId(secondId, bufferSet, usedId));
                 }
 
-                resultList.add(listPairs);
+                usedId.add(firstId);
+                usedId.add(secondId);
             }
-
-            set.add(pair);
-            set.add(pairReverse);
         }
 
         return resultList;
     }
 
-    public void printResult (List<ArrayList<String>> resultList) {
-        for (ArrayList<String> arrayList : resultList) {
-            StringBuilder sb = new StringBuilder();
+    public void printResult (Set<String> resultSet) {
 
-            for (String string : arrayList) {
-                sb.append(string).append(" ");
+        if (resultSet.isEmpty()) {
+            System.out.println("No cyclic dependencies");
+        } else {
+            for (String string : resultSet) {
+                System.out.println(string);
             }
-
-            System.out.println(sb.toString().trim());
         }
     }
 }
